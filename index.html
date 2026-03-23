@@ -432,7 +432,7 @@
         <div class="logo"></div>
         <div>
           <h1>Aktuelle Meldungen in Vorarlberg</h1>
-          <div class="sub" id="statusLine">Nur Meldungen von heute</div>
+          <div class="sub" id="statusLine">Meldungen von heute</div>
         </div>
       </div>
       <div class="weather-box" id="weatherBox" aria-label="3-Tage-Wettertrend Feldkirch">
@@ -782,7 +782,7 @@
 
     async function loadFeed() {
       statusEl && (statusEl.textContent = 'Lade aktuelle Meldungen …');
-      statusLineEl && (statusLineEl.textContent = 'Nur Meldungen von heute • Aktualisierung läuft …');
+      statusLineEl && (statusLineEl.textContent = 'Meldungen von heute • Aktualisierung läuft …');
       try {
         const xml = await fetchFeedXml();
         const items = parseRss(xml);
@@ -791,12 +791,12 @@
           day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         }).format(new Date());
         updatedEl.textContent = updatedText;
-        statusLineEl && (statusLineEl.textContent = `Nur Meldungen von heute • ${updatedText}`);
+        statusLineEl && (statusLineEl.textContent = `Meldungen von heutee • ${updatedText}`);
       } catch (error) {
         stopAutoScroll();
         viewport.innerHTML = `<div class="empty">Feed konnte nicht geladen werden.<br><br>${escapeHtml(error.message)}</div>`;
         updatedEl.textContent = 'Letzter Abruf fehlgeschlagen';
-        statusLineEl && (statusLineEl.textContent = 'Nur Meldungen von heute • Letzter Abruf fehlgeschlagen');
+        statusLineEl && (statusLineEl.textContent = 'Meldungen von heute • Letzter Abruf fehlgeschlagen');
       }
     }
 
