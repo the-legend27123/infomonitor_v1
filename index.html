@@ -13,6 +13,8 @@
       --accent: #ff4d3d;
       --line: rgba(255,255,255,0.08);
       --footer-h: 48px;
+      --alert-space: 40px;
+      --news-gap: 20px;
       --radius: 20px;
     }
 
@@ -37,9 +39,11 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 22px 34px 18px;
+      padding: 22px 34px 14px;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+      position: relative;
+      z-index: 2;
     }
 
     .header-top {
@@ -135,7 +139,6 @@
 
     .weather-alert {
       display: none;
-      width: 100%;
       align-items: center;
       gap: 18px;
       padding: 14px 18px;
@@ -146,8 +149,26 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.16);
     }
 
+    .weather-alert.docked {
+      position: fixed;
+      left: 28px;
+      right: 28px;
+      bottom: calc(var(--footer-h) + 16px);
+      z-index: 15;
+      max-height: min(24vh, 220px);
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(74,15,18,0.4) rgba(255,255,255,0.15);
+    }
+
     .weather-alert.visible {
       display: flex;
+    }
+
+    .weather-alert.level-green {
+      background: rgba(62, 117, 73,1);
+      color: #d9f7df;
+      border-color: rgba(62, 117, 73, 1);
     }
 
     .weather-alert-icon {
@@ -163,7 +184,7 @@
     }
 
     .weather-alert-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 800;
       margin-bottom: 2px;
     }
@@ -182,7 +203,40 @@
     main {
       overflow: hidden;
       position: relative;
-      padding: 18px 26px;
+      padding: 12px 26px 18px;
+    }
+
+    .cycle-marker-static {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin: 0 0 34px;
+      padding: 10px 2px 6px;
+      position: relative;
+      z-index: 1;
+      background: transparent;
+    }
+
+    .cycle-marker-static.hidden {
+      display: none;
+    }
+
+    .cycle-marker-static::before,
+    .cycle-marker-static::after {
+      content: '';
+      flex: 1 1 auto;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(255,77,61,0.15), rgba(255,77,61,0.95), rgba(255,77,61,0.15));
+      border-radius: 999px;
+    }
+
+    .cycle-marker-static span {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.9rem;
+      font-weight: 800;
+      white-space: nowrap;
     }
 
     .fade-top,
@@ -214,6 +268,7 @@
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 77, 61, 0.85) rgba(255,255,255,0.08);
       scroll-behavior: auto;
+      overscroll-behavior: none;
     }
 
     .viewport::-webkit-scrollbar {
@@ -231,6 +286,20 @@
       border: 3px solid rgba(0,0,0,0);
       background-clip: padding-box;
     }
+    .viewport-inner {
+      min-height: 100%;
+      padding-top: 34px;
+      padding-bottom: calc(var(--alert-space) + 34px);
+    }
+
+    .ticker {
+      display: flex;
+      flex-direction: column;
+      gap: var(--news-gap);
+      will-change: transform;
+      padding-top: 8px;
+    }
+
 
     .viewport::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 77, 61, 1);
@@ -240,21 +309,28 @@
     .ticker {
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      padding-bottom: 18px;
+      gap: var(--news-gap);
+      padding-bottom: var(--news-gap);
+    }
+
+    .ticker-pass {
+      display: flex;
+      flex-direction: column;
+      gap: var(--news-gap);
     }
 
     .set {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: var(--news-gap);
     }
 
     .cycle-marker {
       display: flex;
       align-items: center;
       gap: 18px;
-      padding: 4px 2px;
+      padding: 12px 2px 16px;
+      margin-bottom: 18px;
     }
 
     .cycle-marker::before,
@@ -283,14 +359,14 @@
     .item {
       display: grid;
       grid-template-columns: 110px minmax(0, 1fr);
-      gap: 18px;
+      gap: 22px;
       align-items: start;
-      padding: 18px 20px;
+      padding: 24px 24px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
       box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-      min-height: 148px;
+      min-height: 156px;
     }
 
     .time {
@@ -441,20 +517,23 @@
         <div class="weather-day"><div class="weather-dayname">Trend</div><div class="weather-icon">…</div><div class="weather-temp">-- / --</div><div class="weather-desc">Lade Wetter…</div></div>
       </div>
     </div>
-    <div class="weather-alert" id="weatherAlert" aria-live="polite"></div>
   </header>
 
   <main>
     <div class="fade-top"></div>
     <div class="fade-bottom"></div>
     <div class="viewport" id="viewport">
-      <div class="status" id="status">Lade aktuelle Meldungen …</div>
+      <div class="viewport-inner" id="viewportInner">
+        <div class="status" id="status">Lade aktuelle Meldungen …</div>
+      </div>
     </div>
   </main>
 
+  <div class="weather-alert docked" id="weatherAlert" aria-live="polite"></div>
+
   <footer>
     <div class="service-band">
-      <span><strong>Quelle:</strong> ORF Vorarlberg RSS</span>
+      <span><strong>Quelle:</strong> ORF Vorarlberg RSS · GeoSphere Austria</span>
       <span class="dot"></span>
       <span id="serviceNow">--</span>
       <span class="dot"></span>
@@ -467,7 +546,12 @@
     const REFRESH_MS = 5 * 60 * 1000;
     const MAX_ITEMS = 30;
     const SCROLL_PIXELS_PER_SECOND = 60;
-    const RESTART_PAUSE_MS = 1800;
+    const FIELDKIRCH_COORDS = { lat: 47.2411, lon: 9.5986 };
+    const GEOSPHERE_WEATHER_URL = `https://dataset.api.hub.geosphere.at/v1/timeseries/forecast/nwp-v1-1h-2500m?parameters=t2m&parameters=mxt2m&parameters=mnt2m&parameters=rr_acc&parameters=tcc&lat_lon=${FIELDKIRCH_COORDS.lat},${FIELDKIRCH_COORDS.lon}`;
+    const WARNING_LOOKAHEAD_HOURS = 48;
+    const MIN_RED_BANNER_LEVEL = 2;
+    const WARNING_URL = `https://warnungen.zamg.at/wsapp/api/getWarningsForCoords?lon=${FIELDKIRCH_COORDS.lon}&lat=${FIELDKIRCH_COORDS.lat}&lang=de`;
+    const FORCE_ALERT_HOTKEY = { ctrl: true, alt: true, key: 'w' };
 
     const fallbackEndpoints = [
       url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -481,10 +565,13 @@
     const serviceNowEl = document.getElementById('serviceNow');
     const weatherBoxEl = document.getElementById('weatherBox');
     const weatherAlertEl = document.getElementById('weatherAlert');
+    const viewportInnerEl = document.getElementById('viewportInner');
+    const cycleMarkerTemplate = '<div class="cycle-marker-static" aria-label="Neueste Nachrichten"><span>Neueste Nachrichten</span></div>';
 
     let animationFrameId = null;
-    let pauseTimeoutId = null;
     let lastFrameTs = null;
+    let forceWeatherAlert = false;
+    let latestOfficialWarnings = [];
 
     function escapeHtml(str = '') {
       return str
@@ -565,38 +652,227 @@
 
     function hideWeather() {
       if (weatherBoxEl) weatherBoxEl.classList.add('hidden');
-      if (weatherAlertEl) {
-        weatherAlertEl.classList.remove('visible');
-        weatherAlertEl.innerHTML = '';
-      }
     }
 
-    function renderWeatherNotice(days) {
-      if (!weatherAlertEl) return;
-      const severeDay = days.find(day => {
-        const code = Number(day.code);
-        return [66, 67, 71, 73, 75, 77, 85, 86, 95, 96, 99].includes(code);
-      }) || days.find(day => Number(day.wind || 0) >= 60) || days.find(day => Number(day.precip || 0) >= 20);
+    function parseGeosphereDate(value) {
+      if (!value) return null;
+      const match = String(value).match(/(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})/);
+      if (!match) return null;
+      const [, dd, mm, yyyy, hh, min] = match;
+      return new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`);
+    }
 
-      if (!severeDay) {
-        weatherAlertEl.classList.remove('visible');
-        weatherAlertEl.innerHTML = '';
+    function formatGeosphereRange(begin, end) {
+      const start = parseGeosphereDate(begin);
+      const finish = parseGeosphereDate(end);
+      const format = date => new Intl.DateTimeFormat('de-AT', {
+        weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      }).format(date);
+      if (start && finish) return `${format(start)} – ${format(finish)}`;
+      return begin || end || 'Aktuell';
+    }
+
+    function getWarningWindowed(warnings = latestOfficialWarnings, options = {}) {
+      const { bypassLevel = false, bypassTime = false } = options;
+      const now = Date.now();
+      const futureCutoff = now + WARNING_LOOKAHEAD_HOURS * 60 * 60 * 1000;
+
+      return (warnings || []).filter(item => {
+        const level = Number(item.warnstufeid || item.level || 0);
+        const begin = parseGeosphereDate(item.begin)?.getTime() ?? null;
+        const end = parseGeosphereDate(item.end)?.getTime() ?? null;
+        const passesLevel = bypassLevel || level >= MIN_RED_BANNER_LEVEL;
+        const passesTime = bypassTime || (
+          (begin !== null && begin <= futureCutoff && (end === null || end >= now)) ||
+          (begin === null && end !== null && end >= now)
+        );
+        return passesLevel && passesTime;
+      }).sort((a, b) => {
+        const levelDiff = Number(b.warnstufeid || 0) - Number(a.warnstufeid || 0);
+        if (levelDiff !== 0) return levelDiff;
+        const aStart = parseGeosphereDate(a.begin)?.getTime() || Number.MAX_SAFE_INTEGER;
+        const bStart = parseGeosphereDate(b.begin)?.getTime() || Number.MAX_SAFE_INTEGER;
+        return aStart - bStart;
+      });
+    }
+
+    function getSyntheticGreenWarning() {
+      const now = new Date();
+      const end = new Date(now.getTime() + WARNING_LOOKAHEAD_HOURS * 60 * 60 * 1000);
+      const pad = value => String(value).padStart(2, '0');
+      const asGeo = date => `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      return {
+        warnstufeid: 0,
+        warntypid: 0,
+        begin: asGeo(now),
+        end: asGeo(end),
+        text: `Keine warnrelevanten GeoSphere-Meldungen innerhalb der nächsten ${WARNING_LOOKAHEAD_HOURS} Stunden.`,
+        empfehlungen: 'Testmodus aktiv.'
+      };
+    }
+
+    function buildWarningBannerContent(item, { forced = false } = {}) {
+      const levelId = Number(item?.warnstufeid || 0);
+      const levelText = levelId > 0 ? getWarnLevelLabel(levelId) : 'Grün';
+      const title = `${levelText}-Wetterwarnung`;
+      const timeText = item ? formatGeosphereRange(item.begin, item.end) : 'Per Tastenkombination aktiviert';
+      const warnType = item ? getWarnTypeLabel(item.warntypid) : 'Hinweis';
+      const detail = item?.auswirkungen || item?.text || item?.beschreibung || item?.shorttext || (forced ? 'Diese Meldung wird unabhängig vom aktuellen GeoSphere-Status eingeblendet.' : `${warnType} möglich.`);
+      const recommendation = item?.empfehlungen || item?.recommendation || '';
+      const forcedNote = forced ? ' • Testmodus' : '';
+
+      return `
+        <div class="weather-alert-icon">!</div>
+        <div>
+          <div class="weather-alert-title">${escapeHtml(title)}${forced ? ' <span style="font-weight:700; opacity:.8;">(Test)</span>' : ''}</div>
+          <div class="weather-alert-time">${escapeHtml(timeText)}${forcedNote}</div>
+          <div class="weather-alert-text">${escapeHtml(warnType)}: ${escapeHtml(detail)}${recommendation ? ` ${escapeHtml(recommendation)}` : ''}</div>
+        </div>
+      `;
+    }
+
+    function syncAlertSpacing() {
+      const root = document.documentElement;
+      if (!weatherAlertEl || !root) return;
+      const extraGap = 34;
+      const height = weatherAlertEl.classList.contains('visible') ? weatherAlertEl.offsetHeight + extraGap : 28;
+      root.style.setProperty('--alert-space', `${height}px`);
+    }
+
+    function getWarnTypeLabel(typeId) {
+      const labels = {
+        1: 'Sturm',
+        2: 'Regen',
+        3: 'Schnee',
+        4: 'Glatteis',
+        5: 'Gewitter',
+        6: 'Hitze',
+        7: 'Kälte'
+      };
+      return labels[Number(typeId)] || 'Warnung';
+    }
+
+    function getWarnLevelLabel(levelId) {
+      const labels = { 1: 'Gelb', 2: 'Orange', 3: 'Rot' };
+      return labels[Number(levelId)] || 'Warnung';
+    }
+
+    function renderOfficialWarningBanner(warnings = latestOfficialWarnings) {
+      if (!weatherAlertEl) return;
+
+      const visibleWarnings = getWarningWindowed(warnings);
+      const forcedWarnings = getWarningWindowed(warnings, { bypassLevel: true, bypassTime: false });
+      weatherAlertEl.classList.remove('level-green');
+
+      if (forceWeatherAlert) {
+        const forcedItem = forcedWarnings[0] || getSyntheticGreenWarning();
+        weatherAlertEl.innerHTML = buildWarningBannerContent(forcedItem, { forced: true });
+        weatherAlertEl.classList.add('visible');
+        if (Number(forcedItem?.warnstufeid || 0) < MIN_RED_BANNER_LEVEL) {
+          weatherAlertEl.classList.add('level-green');
+        }
+        syncAlertSpacing();
         return;
       }
 
-      const title = severeDay.code >= 95 ? 'Wetterhinweis: Feldkirch' : 'Vorsicht: Feldkirch';
-      const timeText = `${formatWeatherDay(severeDay.date, 0)} · ${Math.round(severeDay.max)}° / ${Math.round(severeDay.min)}°`;
-      const detail = getWeatherLabel(severeDay.code);
+      if (!visibleWarnings.length) {
+        weatherAlertEl.classList.remove('visible');
+        weatherAlertEl.innerHTML = '';
+        syncAlertSpacing();
+        return;
+      }
 
-      weatherAlertEl.innerHTML = `
-        <div class="weather-alert-icon">!</div>
-        <div>
-          <div class="weather-alert-title">${escapeHtml(title)}</div>
-          <div class="weather-alert-time">${escapeHtml(timeText)}</div>
-          <div class="weather-alert-text">${escapeHtml(detail)} in Feldkirch möglich.</div>
-        </div>
-      `;
+      weatherAlertEl.innerHTML = buildWarningBannerContent(visibleWarnings[0]);
       weatherAlertEl.classList.add('visible');
+      syncAlertSpacing();
+    }
+
+
+    function extractParamSeriesDeep(node, targetKey) {
+      if (node == null) return null;
+      if (Array.isArray(node)) {
+        for (const entry of node) {
+          const found = extractParamSeriesDeep(entry, targetKey);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof node !== 'object') return null;
+
+      if (targetKey in node) {
+        const value = node[targetKey];
+        if (Array.isArray(value)) return value;
+        if (value && typeof value === 'object') {
+          if (Array.isArray(value.data)) return value.data;
+          if (Array.isArray(value.values)) return value.values;
+          if (Array.isArray(value.series)) return value.series;
+        }
+      }
+
+      for (const value of Object.values(node)) {
+        const found = extractParamSeriesDeep(value, targetKey);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function extractTimeSeriesDeep(node) {
+      const candidateKeys = ['timestamps', 'time', 'times', 'datetimes'];
+      for (const key of candidateKeys) {
+        const found = extractParamSeriesDeep(node, key);
+        if (Array.isArray(found) && found.length) return found;
+      }
+      return null;
+    }
+
+    function parseGeosphereWeatherPayload(data) {
+      const times = extractTimeSeriesDeep(data) || [];
+      const t2m = extractParamSeriesDeep(data, 't2m') || [];
+      const max2m = extractParamSeriesDeep(data, 'mxt2m') || [];
+      const min2m = extractParamSeriesDeep(data, 'mnt2m') || [];
+      const rrAcc = extractParamSeriesDeep(data, 'rr_acc') || [];
+      const tcc = extractParamSeriesDeep(data, 'tcc') || [];
+
+      if (!times.length || (!t2m.length && !max2m.length && !min2m.length)) {
+        throw new Error('GeoSphere-Wetterdaten konnten nicht interpretiert werden.');
+      }
+
+      const rows = times.map((time, index) => ({
+        time,
+        date: String(time).slice(0, 10),
+        t2m: Number(t2m[index]),
+        max: Number(max2m[index]),
+        min: Number(min2m[index]),
+        rrAcc: Number(rrAcc[index]),
+        tcc: Number(tcc[index])
+      })).filter(row => row.date && !Number.isNaN(new Date(row.time).getTime()));
+
+      const grouped = new Map();
+      for (const row of rows) {
+        if (!grouped.has(row.date)) grouped.set(row.date, []);
+        grouped.get(row.date).push(row);
+      }
+
+      const dayEntries = [...grouped.entries()].slice(0, 3).map(([date, entries]) => {
+        const validTemps = entries.map(e => e.t2m).filter(v => Number.isFinite(v));
+        const validMax = entries.map(e => e.max).filter(v => Number.isFinite(v));
+        const validMin = entries.map(e => e.min).filter(v => Number.isFinite(v));
+        const validCloud = entries.map(e => e.tcc).filter(v => Number.isFinite(v));
+        const rrValues = entries.map(e => e.rrAcc).filter(v => Number.isFinite(v));
+        const precipTotal = rrValues.length ? Math.max(0, rrValues[rrValues.length - 1] - rrValues[0]) : 0;
+        const avgCloud = validCloud.length ? validCloud.reduce((a,b)=>a+b,0) / validCloud.length : NaN;
+        const maxTemp = validMax.length ? Math.max(...validMax) : (validTemps.length ? Math.max(...validTemps) : NaN);
+        const minTemp = validMin.length ? Math.min(...validMin) : (validTemps.length ? Math.min(...validTemps) : NaN);
+        let code = 3;
+        if (precipTotal >= 0.6) code = 61;
+        else if (Number.isFinite(avgCloud) && avgCloud <= 25) code = 0;
+        else if (Number.isFinite(avgCloud) && avgCloud <= 55) code = 2;
+        else code = 3;
+        return { date, max: maxTemp, min: minTemp, precip: precipTotal, cloud: avgCloud, code };
+      }).filter(day => Number.isFinite(day.max) || Number.isFinite(day.min));
+
+      if (!dayEntries.length) throw new Error('Keine GeoSphere-Tageswerte verfügbar.');
+      return dayEntries;
     }
 
     function renderWeather(days) {
@@ -610,31 +886,14 @@
           <div class="weather-desc">${escapeHtml(getWeatherLabel(day.code))}</div>
         </div>
       `).join('');
-      renderWeatherNotice(days);
+      renderOfficialWarningBanner();
     }
 
     async function loadWeather() {
       if (!weatherBoxEl) return;
       try {
-        const url = 'https://api.open-meteo.com/v1/forecast?latitude=47.237&longitude=9.600&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max&forecast_days=3&timezone=Europe%2FBerlin';
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Wetterdienst nicht erreichbar');
-        const data = await res.json();
-        const times = data?.daily?.time || [];
-        const maxs = data?.daily?.temperature_2m_max || [];
-        const mins = data?.daily?.temperature_2m_min || [];
-        const codes = data?.daily?.weather_code || [];
-        const precips = data?.daily?.precipitation_sum || [];
-        const winds = data?.daily?.wind_speed_10m_max || [];
-        const days = times.slice(0, 3).map((date, i) => ({
-          date,
-          max: maxs[i],
-          min: mins[i],
-          code: codes[i],
-          precip: precips[i],
-          wind: winds[i]
-        }));
-        if (!days.length) throw new Error('Keine Wetterdaten verfügbar');
+        const data = await fetchJsonWithFallback(GEOSPHERE_WEATHER_URL);
+        const days = parseGeosphereWeatherPayload(data);
         renderWeather(days);
       } catch (error) {
         hideWeather();
@@ -651,6 +910,50 @@
         && date.getMonth() === now.getMonth()
         && date.getDate() === now.getDate();
     }
+
+    async function fetchJsonWithFallback(url) {
+      try {
+        const direct = await fetch(url, { cache: 'no-store' });
+        if (direct.ok) return await direct.json();
+      } catch (_) {}
+
+      for (const makeUrl of fallbackEndpoints) {
+        try {
+          const res = await fetch(makeUrl(url), { cache: 'no-store' });
+          if (!res.ok) continue;
+          const text = await res.text();
+          return JSON.parse(text);
+        } catch (_) {}
+      }
+
+      throw new Error('Warnungen konnten nicht geladen werden.');
+    }
+
+    async function loadOfficialWarnings() {
+      try {
+        const data = await fetchJsonWithFallback(WARNING_URL);
+        latestOfficialWarnings = data?.properties?.warnings?.map(item => item?.properties || item).filter(Boolean) || [];
+      } catch (_) {
+        latestOfficialWarnings = [];
+      }
+      renderOfficialWarningBanner();
+    }
+
+    function setupWarningHotkey() {
+      window.addEventListener('keydown', event => {
+        const matches = event.key.toLowerCase() === FORCE_ALERT_HOTKEY.key
+          && event.ctrlKey === FORCE_ALERT_HOTKEY.ctrl
+          && event.altKey === FORCE_ALERT_HOTKEY.alt;
+        if (!matches) return;
+        event.preventDefault();
+        forceWeatherAlert = !forceWeatherAlert;
+        renderOfficialWarningBanner();
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      syncAlertSpacing();
+    });
 
     async function fetchFeedXml() {
       try {
@@ -698,33 +1001,35 @@
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
       }
-      if (pauseTimeoutId) {
-        clearTimeout(pauseTimeoutId);
-        pauseTimeoutId = null;
-      }
       lastFrameTs = null;
+    }
+
+    function normalizeInfiniteScroll() {
+      const ticker = document.getElementById('ticker');
+      if (!ticker) return;
+      const resetPoint = Number(ticker.dataset.resetPoint || 0);
+      if (!resetPoint) return;
+
+      if (viewport.scrollTop >= resetPoint) {
+        viewport.scrollTop -= resetPoint;
+      } else if (viewport.scrollTop < 0) {
+        viewport.scrollTop += resetPoint;
+      }
     }
 
     function startAutoScroll() {
       stopAutoScroll();
 
-      const maxScrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
-      if (maxScrollTop <= 0) return;
+      const ticker = document.getElementById('ticker');
+      const resetPoint = Number(ticker?.dataset.resetPoint || 0);
+      if (!ticker || resetPoint <= 0) return;
 
       function step(timestamp) {
-        if (lastFrameTs == null) {
-          lastFrameTs = timestamp;
-        }
-
+        if (lastFrameTs == null) lastFrameTs = timestamp;
         const delta = (timestamp - lastFrameTs) / 1000;
         lastFrameTs = timestamp;
         viewport.scrollTop += SCROLL_PIXELS_PER_SECOND * delta;
-
-        const setA = document.getElementById('setA');
-        if (setA && viewport.scrollTop >= setA.offsetHeight) {
-          viewport.scrollTop -= setA.offsetHeight;
-        }
-
+        normalizeInfiniteScroll();
         animationFrameId = requestAnimationFrame(step);
       }
 
@@ -735,7 +1040,8 @@
       stopAutoScroll();
 
       if (!items.length) {
-        viewport.innerHTML = '<div class="empty">Heute bisher keine neuen Meldungen aus Vorarlberg.<br><br>Die Anzeige aktualisiert sich automatisch weiter.</div>';
+        viewportInnerEl.innerHTML = '<div class="empty">Heute bisher keine neuen Meldungen aus Vorarlberg.<br><br>Die Anzeige aktualisiert sich automatisch weiter.</div>';
+        viewport.scrollTop = 0;
         return;
       }
 
@@ -761,21 +1067,25 @@
         `;
       }).join('');
 
-      const cycleMarker = `
-        <div class="cycle-marker" aria-label="Neueste Nachrichten">
-          <span>Neueste Nachrichten</span>
-        </div>
-      `;
-
-      viewport.innerHTML = `
-        <div class="ticker" id="ticker">
-          <div class="set" id="setA">${cycleMarker}${singleItems}</div>
-          <div class="set" id="setB" aria-hidden="true">${singleItems}</div>
-        </div>
+      const singlePass = `<div class="ticker-pass">${cycleMarkerTemplate}${singleItems}</div>`;
+      viewportInnerEl.innerHTML = `
+        <div class="ticker" id="ticker">${singlePass}${singlePass}</div>
       `;
 
       requestAnimationFrame(() => {
+        const ticker = document.getElementById('ticker');
+        const firstPass = ticker?.firstElementChild;
+        const resetPoint = firstPass ? firstPass.offsetHeight : 0;
+        if (ticker) ticker.dataset.resetPoint = String(resetPoint);
         viewport.scrollTop = 0;
+        const imgs = viewport.querySelectorAll('img');
+        imgs.forEach(img => img.addEventListener('load', () => {
+          const refreshedFirstPass = document.getElementById('ticker')?.firstElementChild;
+          const refreshedTicker = document.getElementById('ticker');
+          if (refreshedTicker && refreshedFirstPass) {
+            refreshedTicker.dataset.resetPoint = String(refreshedFirstPass.offsetHeight);
+          }
+        }, { once: true }));
         startAutoScroll();
       });
     }
@@ -801,9 +1111,12 @@
     }
 
     updateServiceNow();
+    setupWarningHotkey();
     loadWeather();
+    loadOfficialWarnings();
     setInterval(updateServiceNow, 1000);
     setInterval(loadWeather, REFRESH_MS);
+    setInterval(loadOfficialWarnings, REFRESH_MS);
     loadFeed();
     setInterval(loadFeed, REFRESH_MS);
   </script>
