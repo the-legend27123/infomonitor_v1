@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aktuelle Meldungen in Vorarlberg</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --text: #f3f5f7;
+      --muted: #aeb6c2;
+      --accent: #ff4d3d;
+      --line: rgba(255,255,255,0.08);
+      --footer-h: 48px;
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr var(--footer-h);
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px 34px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      width: 100%;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 10px;
+      height: 42px;
+      border-radius: 999px;
+      background: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .weather-box {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      flex: 1 1 720px;
+      min-width: 560px;
+      max-width: 980px;
+      margin-left: 24px;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+
+    .weather-box.hidden {
+      display: none;
+    }
+
+    .weather-day {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: none;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      text-align: center;
+    }
+
+    .weather-dayname {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .weather-icon {
+      margin-top: 8px;
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .weather-temp {
+      margin-top: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .weather-desc {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.25;
+    }
+
+    .weather-alert {
+      display: none;
+      width: 100%;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: #ee9a9a;
+      color: #4a0f12;
+      border: 1px solid rgba(74,15,18,0.12);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+    }
+
+    .weather-alert.visible {
+      display: flex;
+    }
+
+    .weather-alert-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 3px solid currentColor;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.4rem;
+      flex: 0 0 auto;
+    }
+
+    .weather-alert-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .weather-alert-time {
+      font-size: 0.98rem;
+      opacity: 0.95;
+    }
+
+    .weather-alert-text {
+      margin-top: 4px;
+      font-size: 0.98rem;
+      line-height: 1.35;
+    }
+
+    main {
+      overflow: hidden;
+      position: relative;
+      padding: 18px 26px;
+    }
+
+    .fade-top,
+    .fade-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 54px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .fade-top {
+      top: 0;
+      background: linear-gradient(var(--bg), rgba(15,17,21,0));
+    }
+
+    .fade-bottom {
+      bottom: 0;
+      background: linear-gradient(rgba(15,17,21,0), var(--bg));
+    }
+
+    .viewport {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      padding-right: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 77, 61, 0.85) rgba(255,255,255,0.08);
+      scroll-behavior: auto;
+    }
+
+    .viewport::-webkit-scrollbar {
+      width: 14px;
+    }
+
+    .viewport::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+    }
+
+    .viewport::-webkit-scrollbar-thumb {
+      background: rgba(255, 77, 61, 0.85);
+      border-radius: 999px;
+      border: 3px solid rgba(0,0,0,0);
+      background-clip: padding-box;
+    }
+
+    .viewport::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 77, 61, 1);
+      background-clip: padding-box;
+    }
+
+    .ticker {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 18px;
+    }
+
+    .set {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .cycle-marker {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 4px 2px;
+    }
+
+    .cycle-marker::before,
+    .cycle-marker::after {
+      content: '';
+      flex: 1;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .cycle-marker span {
+      color: #ffffff;
+      background: rgba(255, 77, 61, 0.14);
+      border: 1px solid rgba(255, 77, 61, 0.45);
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+      min-height: 148px;
+    }
+
+    .time {
+      color: var(--muted);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      padding-top: 6px;
+    }
+
+    .time-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .badge-new {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 24px rgba(255, 77, 61, 0.22);
+    }
+
+    .content.with-image {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .title {
+      font-size: 1.95rem;
+      line-height: 1.2;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+
+    .desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .image-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+    }
+
+    .image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .status, .empty {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.3rem;
+      padding: 30px;
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 34px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .source strong { color: var(--text); }
+
+    .service-band {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .service-band .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      flex: 0 0 auto;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 1400px) {
+      .content.with-image { grid-template-columns: minmax(0, 1fr) 220px; }
+      .title { font-size: 1.65rem; }
+      .desc { font-size: 1rem; }
+    }
+
+    @media (max-width: 1200px) {
+      h1 { font-size: 1.6rem; }
+      .header-top { flex-direction: column; align-items: flex-start; }
+      .weather-box { margin-left: 0; min-width: 0; max-width: none; width: 100%; justify-content: flex-start; }
+      .weather-day { min-width: 0; max-width: none; }
+      .item { grid-template-columns: 88px 1fr; }
+      .content.with-image { grid-template-columns: 1fr; }
+      .image-wrap { max-width: 360px; }
+      .title { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Aktuelle Meldungen in Vorarlberg</h1>
+          <div class="sub" id="statusLine">Nur Meldungen von heute</div>
+        </div>
+      </div>
+      <div class="weather-box" id="weatherBox" aria-label="3-Tage-Wettertrend Feldkirch">
+        <div class="weather-day"><div class="weather-dayname">Heute</div><div class="weather-icon">…</div><div class="weather-temp">-- / --</div><div class="weather-desc">Lade Wetter…</div></div>
+        <div class="weather-day"><div class="weather-dayname">Morgen</div><div class="weather-icon">…</div><div class="weather-temp">-- / --</div><div class="weather-desc">Lade Wetter…</div></div>
+        <div class="weather-day"><div class="weather-dayname">Trend</div><div class="weather-icon">…</div><div class="weather-temp">-- / --</div><div class="weather-desc">Lade Wetter…</div></div>
+      </div>
+    </div>
+    <div class="weather-alert" id="weatherAlert" aria-live="polite"></div>
+  </header>
+
+  <main>
+    <div class="fade-top"></div>
+    <div class="fade-bottom"></div>
+    <div class="viewport" id="viewport">
+      <div class="status" id="status">Lade aktuelle Meldungen …</div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="service-band">
+      <span><strong>Quelle:</strong> ORF Vorarlberg RSS</span>
+      <span class="dot"></span>
+      <span id="serviceNow">--</span>
+      <span class="dot"></span>
+      <span id="updated">Aktualisierung läuft …</span>
+    </div>
+  </footer>
+
+  <script>
+    const FEED_URL = 'https://rss.orf.at/vorarlberg.xml';
+    const REFRESH_MS = 5 * 60 * 1000;
+    const MAX_ITEMS = 30;
+    const SCROLL_PIXELS_PER_SECOND = 60;
+    const RESTART_PAUSE_MS = 1800;
+
+    const fallbackEndpoints = [
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      url => `https://cors.isomorphic-git.org/${url}`
+    ];
+
+    const viewport = document.getElementById('viewport');
+    const statusEl = document.getElementById('status');
+    const updatedEl = document.getElementById('updated');
+    const statusLineEl = document.getElementById('statusLine');
+    const serviceNowEl = document.getElementById('serviceNow');
+    const weatherBoxEl = document.getElementById('weatherBox');
+    const weatherAlertEl = document.getElementById('weatherAlert');
+
+    let animationFrameId = null;
+    let pauseTimeoutId = null;
+    let lastFrameTs = null;
+
+    function escapeHtml(str = '') {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function stripHtml(html = '') {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return (tmp.textContent || tmp.innerText || '').trim();
+    }
+
+    function extractImageFromDescription(html = '') {
+      const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+      return match ? match[1] : '';
+    }
+
+
+    function formatItemTime(dateString) {
+      if (!dateString) return 'ORF';
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return 'ORF';
+      return new Intl.DateTimeFormat('de-AT', {
+        hour: '2-digit', minute: '2-digit'
+      }).format(date);
+    }
+
+    function isRecent(dateString, hours = 2) {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return false;
+      return (Date.now() - date.getTime()) <= hours * 60 * 60 * 1000;
+    }
+
+    function updateServiceNow() {
+      const now = new Date();
+      if (!serviceNowEl) return;
+      serviceNowEl.textContent = new Intl.DateTimeFormat('de-AT', {
+        weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }).format(now);
+    }
+
+
+    function getWeatherIcon(code) {
+      if ([0].includes(code)) return '☀️';
+      if ([1, 2].includes(code)) return '🌤️';
+      if ([3].includes(code)) return '☁️';
+      if ([45, 48].includes(code)) return '🌫️';
+      if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+      if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return '🌨️';
+      if ([95, 96, 99].includes(code)) return '⛈️';
+      return '🌡️';
+    }
+
+    function getWeatherLabel(code) {
+      const map = {
+        0: 'Sonnig', 1: 'Meist sonnig', 2: 'Teilweise sonnig', 3: 'Bewölkt',
+        45: 'Neblig', 48: 'Raureifnebel', 51: 'Nieselregen', 53: 'Nieselregen', 55: 'Nieselregen',
+        56: 'Gefrierender Nieselregen', 57: 'Gefrierender Nieselregen', 61: 'Leichter Regen',
+        63: 'Regen', 65: 'Starker Regen', 66: 'Gefrierender Regen', 67: 'Gefrierender Regen',
+        71: 'Leichter Schnee', 73: 'Schnee', 75: 'Starker Schnee', 77: 'Schneekörner',
+        80: 'Regenschauer', 81: 'Regenschauer', 82: 'Starke Schauer', 85: 'Schneeschauer',
+        86: 'Schneeschauer', 95: 'Gewitter', 96: 'Gewitter/Hagel', 99: 'Gewitter/Hagel'
+      };
+      return map[code] || 'Wetter';
+    }
+
+    function formatWeatherDay(dateString, index) {
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return index === 0 ? 'Heute' : index === 1 ? 'Morgen' : 'Trend';
+      return new Intl.DateTimeFormat('de-AT', { weekday: 'short' }).format(date);
+    }
+
+    function hideWeather() {
+      if (weatherBoxEl) weatherBoxEl.classList.add('hidden');
+      if (weatherAlertEl) {
+        weatherAlertEl.classList.remove('visible');
+        weatherAlertEl.innerHTML = '';
+      }
+    }
+
+    function renderWeatherNotice(days) {
+      if (!weatherAlertEl) return;
+      const severeDay = days.find(day => {
+        const code = Number(day.code);
+        return [66, 67, 71, 73, 75, 77, 85, 86, 95, 96, 99].includes(code);
+      }) || days.find(day => Number(day.wind || 0) >= 60) || days.find(day => Number(day.precip || 0) >= 20);
+
+      if (!severeDay) {
+        weatherAlertEl.classList.remove('visible');
+        weatherAlertEl.innerHTML = '';
+        return;
+      }
+
+      const title = severeDay.code >= 95 ? 'Wetterhinweis: Feldkirch' : 'Vorsicht: Feldkirch';
+      const timeText = `${formatWeatherDay(severeDay.date, 0)} · ${Math.round(severeDay.max)}° / ${Math.round(severeDay.min)}°`;
+      const detail = getWeatherLabel(severeDay.code);
+
+      weatherAlertEl.innerHTML = `
+        <div class="weather-alert-icon">!</div>
+        <div>
+          <div class="weather-alert-title">${escapeHtml(title)}</div>
+          <div class="weather-alert-time">${escapeHtml(timeText)}</div>
+          <div class="weather-alert-text">${escapeHtml(detail)} in Feldkirch möglich.</div>
+        </div>
+      `;
+      weatherAlertEl.classList.add('visible');
+    }
+
+    function renderWeather(days) {
+      if (!weatherBoxEl) return;
+      weatherBoxEl.classList.remove('hidden');
+      weatherBoxEl.innerHTML = days.map((day, index) => `
+        <div class="weather-day">
+          <div class="weather-dayname">${escapeHtml(formatWeatherDay(day.date, index))}</div>
+          <div class="weather-icon">${escapeHtml(getWeatherIcon(day.code))}</div>
+          <div class="weather-temp">${Math.round(day.max)}° / ${Math.round(day.min)}°</div>
+          <div class="weather-desc">${escapeHtml(getWeatherLabel(day.code))}</div>
+        </div>
+      `).join('');
+      renderWeatherNotice(days);
+    }
+
+    async function loadWeather() {
+      if (!weatherBoxEl) return;
+      try {
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=47.237&longitude=9.600&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max&forecast_days=3&timezone=Europe%2FBerlin';
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Wetterdienst nicht erreichbar');
+        const data = await res.json();
+        const times = data?.daily?.time || [];
+        const maxs = data?.daily?.temperature_2m_max || [];
+        const mins = data?.daily?.temperature_2m_min || [];
+        const codes = data?.daily?.weather_code || [];
+        const precips = data?.daily?.precipitation_sum || [];
+        const winds = data?.daily?.wind_speed_10m_max || [];
+        const days = times.slice(0, 3).map((date, i) => ({
+          date,
+          max: maxs[i],
+          min: mins[i],
+          code: codes[i],
+          precip: precips[i],
+          wind: winds[i]
+        }));
+        if (!days.length) throw new Error('Keine Wetterdaten verfügbar');
+        renderWeather(days);
+      } catch (error) {
+        hideWeather();
+      }
+    }
+
+    function isToday(dateString) {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return false;
+
+      const now = new Date();
+      return date.getFullYear() === now.getFullYear()
+        && date.getMonth() === now.getMonth()
+        && date.getDate() === now.getDate();
+    }
+
+    async function fetchFeedXml() {
+      try {
+        const direct = await fetch(FEED_URL, { cache: 'no-store' });
+        if (direct.ok) return await direct.text();
+      } catch (_) {}
+
+      for (const makeUrl of fallbackEndpoints) {
+        try {
+          const res = await fetch(makeUrl(FEED_URL), { cache: 'no-store' });
+          if (res.ok) return await res.text();
+        } catch (_) {}
+      }
+
+      throw new Error('Feed konnte nicht geladen werden.');
+    }
+
+    function parseRss(xmlText) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, 'text/xml');
+      const parseError = xml.querySelector('parsererror');
+      if (parseError) throw new Error('RSS konnte nicht gelesen werden.');
+
+      const items = [...xml.querySelectorAll('item')].slice(0, MAX_ITEMS).map(item => {
+        const descriptionHtml = item.querySelector('description')?.textContent || '';
+        const enclosureUrl = item.querySelector('enclosure[url]')?.getAttribute('url') || '';
+        const mediaContent = item.getElementsByTagName('media:content')[0]?.getAttribute('url') || '';
+        const mediaThumb = item.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url') || '';
+        const image = mediaContent || mediaThumb || enclosureUrl || extractImageFromDescription(descriptionHtml);
+
+        return {
+          title: item.querySelector('title')?.textContent?.trim() || 'Ohne Titel',
+          description: stripHtml(descriptionHtml),
+          pubDate: item.querySelector('pubDate')?.textContent?.trim() || '',
+          link: item.querySelector('link')?.textContent?.trim() || '',
+          image
+        };
+      }).filter(item => isToday(item.pubDate));
+
+      return items;
+    }
+
+    function stopAutoScroll() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (pauseTimeoutId) {
+        clearTimeout(pauseTimeoutId);
+        pauseTimeoutId = null;
+      }
+      lastFrameTs = null;
+    }
+
+    function startAutoScroll() {
+      stopAutoScroll();
+
+      const maxScrollTop = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+      if (maxScrollTop <= 0) return;
+
+      function step(timestamp) {
+        if (lastFrameTs == null) {
+          lastFrameTs = timestamp;
+        }
+
+        const delta = (timestamp - lastFrameTs) / 1000;
+        lastFrameTs = timestamp;
+        viewport.scrollTop += SCROLL_PIXELS_PER_SECOND * delta;
+
+        const setA = document.getElementById('setA');
+        if (setA && viewport.scrollTop >= setA.offsetHeight) {
+          viewport.scrollTop -= setA.offsetHeight;
+        }
+
+        animationFrameId = requestAnimationFrame(step);
+      }
+
+      animationFrameId = requestAnimationFrame(step);
+    }
+
+    function renderItems(items) {
+      stopAutoScroll();
+
+      if (!items.length) {
+        viewport.innerHTML = '<div class="empty">Heute bisher keine neuen Meldungen aus Vorarlberg.<br><br>Die Anzeige aktualisiert sich automatisch weiter.</div>';
+        return;
+      }
+
+      const singleItems = items.map(item => {
+        const hasImage = !!item.image;
+        return `
+          <article class="item">
+            <div class="time-wrap">
+              <div class="time">${escapeHtml(formatItemTime(item.pubDate))}</div>
+              ${isRecent(item.pubDate) ? '<div class="badge-new">Neu</div>' : ''}
+            </div>
+            <div class="content${hasImage ? ' with-image' : ''}">
+              <div>
+                <h2 class="title">${escapeHtml(item.title)}</h2>
+                <p class="desc">${escapeHtml(item.description || 'Aktuelle Meldung von ORF Vorarlberg')}</p>
+              </div>
+              ${hasImage ? `
+                <div class="image-wrap">
+                  <img src="${escapeHtml(item.image)}" alt="Bild zur Meldung" loading="lazy" referrerpolicy="no-referrer" />
+                </div>` : ''}
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      const cycleMarker = `
+        <div class="cycle-marker" aria-label="Neueste Nachrichten">
+          <span>Neueste Nachrichten</span>
+        </div>
+      `;
+
+      viewport.innerHTML = `
+        <div class="ticker" id="ticker">
+          <div class="set" id="setA">${cycleMarker}${singleItems}</div>
+          <div class="set" id="setB" aria-hidden="true">${singleItems}</div>
+        </div>
+      `;
+
+      requestAnimationFrame(() => {
+        viewport.scrollTop = 0;
+        startAutoScroll();
+      });
+    }
+
+    async function loadFeed() {
+      statusEl && (statusEl.textContent = 'Lade aktuelle Meldungen …');
+      statusLineEl && (statusLineEl.textContent = 'Nur Meldungen von heute • Aktualisierung läuft …');
+      try {
+        const xml = await fetchFeedXml();
+        const items = parseRss(xml);
+        renderItems(items);
+        const updatedText = 'Letzte Aktualisierung: ' + new Intl.DateTimeFormat('de-AT', {
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }).format(new Date());
+        updatedEl.textContent = updatedText;
+        statusLineEl && (statusLineEl.textContent = `Nur Meldungen von heute • ${updatedText}`);
+      } catch (error) {
+        stopAutoScroll();
+        viewport.innerHTML = `<div class="empty">Feed konnte nicht geladen werden.<br><br>${escapeHtml(error.message)}</div>`;
+        updatedEl.textContent = 'Letzter Abruf fehlgeschlagen';
+        statusLineEl && (statusLineEl.textContent = 'Nur Meldungen von heute • Letzter Abruf fehlgeschlagen');
+      }
+    }
+
+    updateServiceNow();
+    loadWeather();
+    setInterval(updateServiceNow, 1000);
+    setInterval(loadWeather, REFRESH_MS);
+    loadFeed();
+    setInterval(loadFeed, REFRESH_MS);
+  </script>
+</body>
+</html>
